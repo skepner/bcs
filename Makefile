@@ -29,6 +29,9 @@ DIST = dist
 all: $(DIST)/bcs
 	$(DIST)/bcs
 
+clean:
+	rm -rf $(DIST) $(BUILD)
+
 # ----------------------------------------------------------------------
 
 $(DIST)/%: $(BUILD)/%.o | $(DIST)
