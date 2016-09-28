@@ -71,6 +71,18 @@ class AesRandom
 
 // ----------------------------------------------------------------------
 
+static inline void set_ipad_opad(unsigned char ipad[64], unsigned char opad[64], const unsigned char* digest)
+{
+    memset(ipad, 0x36, 64);
+    memset(opad, 0x5C, 64);
+    for (size_t i = 0; i < 32; ++i) {
+        ipad[i] ^= digest[i];
+        opad[i] ^= digest[i];
+    }
+}
+
+// ----------------------------------------------------------------------
+
 std::string encrypt(std::string passwd, std::string plaintext)
 {
     AesRandom aesrand;
@@ -143,12 +155,7 @@ std::string encrypt(std::string passwd, std::string plaintext)
     aes_set_key(&aes_ctx, digest, 256);
 
     unsigned char ipad[64], opad[64];
-    memset(ipad, 0x36, 64);
-    memset(opad, 0x5C, 64);
-    for (size_t i = 0; i < 32; ++i) {
-        ipad[i] ^= digest[i];
-        opad[i] ^= digest[i];
-    }
+    set_ipad_opad(ipad, opad, digest);
     sha256_starts(&sha_ctx);
     sha256_update(&sha_ctx, ipad, 64);
 
@@ -182,12 +189,7 @@ std::string encrypt(std::string passwd, std::string plaintext)
       // Set the AES encryption key
     aes_set_key(&aes_ctx, iv_key + 16, 256);
       // Set the ipad and opad arrays with values as per RFC 2104 (HMAC).  HMAC is defined as H(K XOR opad, H(K XOR ipad, text))
-    memset(ipad, 0x36, 64);
-    memset(opad, 0x5C, 64);
-    for (size_t i = 0; i < 32; ++i) {
-        ipad[i] ^= iv_key[i+16];
-        opad[i] ^= iv_key[i+16];
-    }
+    set_ipad_opad(ipad, opad, iv_key + 16);
       // Wipe the IV and encryption key from memory
     memset_secure(iv_key, 0, 48);
 
@@ -230,6 +232,67 @@ std::string encrypt(std::string passwd, std::string plaintext)
 
 std::string decrypt(std::string passwd, std::string ciphertext)
 {
+    aescrypt_hdr aeshdr;
+    memcpy(&aeshdr, ciphertext.c_str(), sizeof(aeshdr));
+    if (!(aeshdr.aes[0] == 'A' && aeshdr.aes[1] == 'E' && aeshdr.aes[2] == 'S'))
+        throw std::runtime_error("Bad header: no signature");
+    if (aeshdr.version == 0) {
+          // Let's just consider the least significant nibble to determine the size of the last block
+        aeshdr.last_block_size = aeshdr.last_block_size & 0x0F;
+    }
+    else if (aeshdr.version > 0x02) {
+        throw std::runtime_error("Error: Unsupported AES file version");
+    }
+
+    size_t input_offset = sizeof(aeshdr);
+
+      // Skip over extensions present v2 and later files
+    if (aeshdr.version >= 0x02) {
+        size_t j = 1;
+        while (j) {
+              // Determine the extension length, zero means no more extensions
+            j = (static_cast<size_t>(ciphertext[input_offset]) << 8) | static_cast<size_t>(ciphertext[input_offset + 1]);
+            input_offset += 2 + j;
+            if (input_offset >= ciphertext.size())
+                throw std::runtime_error("ciphertext is too short input_offset:" + std::to_string(input_offset) + " ciphertext:" + std::to_string(ciphertext.size()));
+        }
+    }
+
+      // Get the initialization vector
+    if ((input_offset + 16) > ciphertext.size())
+        throw std::runtime_error("ciphertext is too short");
+    unsigned char IV[16];
+    memcpy(IV, ciphertext.c_str() + input_offset, 16);
+
+    // Hash the IV and password 8192 times
+    sha256_context sha_ctx;
+    sha256_t digest;
+    memset(digest, 0, 32);
+    memcpy(digest, IV, 16);
+    for (size_t i = 0; i < 8192; ++i) {
+        sha256_starts(&sha_ctx);
+        sha256_update(&sha_ctx, digest, 32);
+        sha256_update(&sha_ctx, reinterpret_cast<unsigned char*>(const_cast<char*>(passwd.c_str())), passwd.size());
+        sha256_finish(&sha_ctx, digest);
+    }
+
+      /// Set the AES encryption key
+    aes_context aes_ctx;
+    aes_set_key(&aes_ctx, digest, 256);
+      // Set the ipad and opad arrays with values as per RFC 2104 (HMAC).  HMAC is defined as  H(K XOR opad, H(K XOR ipad, text))
+    unsigned char ipad[64], opad[64];
+    set_ipad_opad(ipad, opad, digest);
+    sha256_starts(&sha_ctx);
+    sha256_update(&sha_ctx, ipad, 64);
+
+    // aescrypt_hdr aeshdr;
+    // unsigned char iv_key[48];
+    // unsigned i, j, n;
+    // size_t bytes_read;
+    // unsigned char buffer[64], buffer2[32];
+    // unsigned char *head, *tail;
+    // int reached_eof = 0;
+
     std::string plaintext; //(ciphertext.size() + 256, 0);
     return plaintext;
 
