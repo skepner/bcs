@@ -1,0 +1,3 @@
+[submodule "AESCrypt"]
+	path = AESCrypt
+	url = https://github.com/paulej/AESCrypt.git

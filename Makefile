@@ -17,12 +17,22 @@ else
 endif
 
 # OPTIMIZATION = -O3
-CXXFLAGS = -MMD -g $(OPTIMIZATION) -fPIC -std=$(STD) $(WEVERYTHING) $(WARNINGS) -I/usr/local/opt/openssl/include
-LDFLAGS = -L/usr/local/opt/openssl/lib
-LDLIBS = -lcrypto
+CXXFLAGS = -MMD -g $(OPTIMIZATION) -fPIC -std=$(STD) $(WEVERYTHING) $(WARNINGS) $(INCLUDES)
+CFLAGS = -MMD -g $(OPTIMIZATION) -fPIC $(WARNINGS) $(INCLUDES)
+LDFLAGS =
+LDLIBS =
 
 BUILD = build
 DIST = dist
+
+# ----------------------------------------------------------------------
+
+AESCRYPT_ROOT = AESCrypt/Linux
+AESCRYPT_SRC = $(AESCRYPT_ROOT)/src
+INCLUDES += -I$(AESCRYPT_ROOT) -I$(AESCRYPT_SRC)
+AESCRYPT_CONFIG_H = $(AESCRYPT_ROOT)/config.h
+AESCRYPT_SOURCES = aes.c sha256.c password.c keyfile.c aesrandom.c util.c
+AESCRYPT_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AESCRYPT_SOURCES))
 
 # ----------------------------------------------------------------------
 
@@ -34,12 +44,26 @@ clean:
 
 # ----------------------------------------------------------------------
 
-$(DIST)/%: $(BUILD)/%.o | $(DIST)
+$(DIST)/%: $(BUILD)/%.o $(AESCRYPT_OBJ) | $(DIST)
 	g++ $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-$(BUILD)/%.o: %.cc | $(BUILD)
+$(BUILD)/%.o: %.cc | $(BUILD) $(BUILD)/submodules
 	@#echo $<
 	g++ $(CXXFLAGS) -c -o $@ $<
+
+$(BUILD)/%.o: $(AESCRYPT_SRC)/%.c $(AESCRYPT_CONFIG_H) | $(BUILD)
+	gcc $(CFLAGS) -c -o $@ $<
+
+# ----------------------------------------------------------------------
+
+$(AESCRYPT_CONFIG_H): $(AESCRYPT_ROOT)/Makefile.am
+	cd $(AESCRYPT_ROOT) && autoreconf -i && ./configure
+
+$(BUILD)/submodules:
+	git submodule init
+	git submodule update
+	git submodule update --remote
+	touch $@
 
 # ----------------------------------------------------------------------
 
@@ -48,5 +72,7 @@ $(DIST):
 
 $(BUILD):
 	mkdir -p $(BUILD)
+
+.PRECIOUS: $(BUILD)/%.o
 
 # ======================================================================
