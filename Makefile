@@ -27,6 +27,10 @@ DIST = dist
 
 # ----------------------------------------------------------------------
 
+SOURCES = bcs.cc bcs-encrypt.cc file.cc server.cc
+
+# ----------------------------------------------------------------------
+
 AESCRYPT_ROOT = AESCrypt/Linux
 AESCRYPT_SRC = $(AESCRYPT_ROOT)/src
 INCLUDES += -I$(AESCRYPT_ROOT) -I$(AESCRYPT_SRC)
@@ -37,14 +41,14 @@ AESCRYPT_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AESCRYPT_SOURCES))
 # ----------------------------------------------------------------------
 
 all: $(DIST)/bcs
-	$(DIST)/bcs
+	@#$(DIST)/bcs
 
 clean:
 	rm -rf $(DIST) $(BUILD)
 
 # ----------------------------------------------------------------------
 
-$(DIST)/%: $(BUILD)/%.o $(AESCRYPT_OBJ) | $(DIST)
+$(DIST)/bcs: $(patsubst %.cc,$(BUILD)/%.o,$(SOURCES)) $(AESCRYPT_OBJ) | $(DIST)
 	g++ $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(BUILD)/%.o: %.cc | $(BUILD) $(BUILD)/submodules
