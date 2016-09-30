@@ -223,6 +223,19 @@ void perform(Socket& sock, Command command, std::string passwd)
               arg2 = sock.read_arg();
               write_file(arg2, encrypt(passwd, read_file(arg1, false)), false);
               break;
+          case EncryptDataFile:
+              arg1 = sock.read_arg();
+              arg2 = sock.read_arg();
+              write_file(arg2, encrypt(passwd, arg1), false);
+              break;
+          case EncryptDataData:
+              arg1 = sock.read_arg();
+              reply = encrypt(passwd, arg1);
+              break;
+          case EncryptFileData:
+              arg1 = sock.read_arg();
+              reply = encrypt(passwd, read_file(arg1, false));
+              break;
           case DecryptFileFile:
               arg1 = sock.read_arg();
               arg2 = sock.read_arg();
@@ -232,10 +245,28 @@ void perform(Socket& sock, Command command, std::string passwd)
               arg1 = sock.read_arg();
               reply = decrypt(passwd, read_file(arg1, false));
               break;
-          case DisconnectClient:
+          case DecryptDataData:
+              arg1 = sock.read_arg();
+              reply = decrypt(passwd, arg1);
               break;
-          default:
-              throw std::runtime_error("Not implemented command " + std::string(1, command));
+          case DecryptDataFile:
+              arg1 = sock.read_arg();
+              arg2 = sock.read_arg();
+              write_file(arg2, decrypt(passwd, arg1), false);
+              break;
+          case DecryptDataTemp:
+              arg1 = sock.read_arg();
+              reply = write_temp_file(decrypt(passwd, arg1));
+              break;
+          case DecryptFileTemp:
+              arg1 = sock.read_arg();
+              reply = write_temp_file(decrypt(passwd, read_file(arg1, false)));
+              break;
+          case DisconnectClient:
+          case KillServer:
+              break;
+          // default:
+          //     throw std::runtime_error("Not implemented command " + std::string(1, command));
         }
         sock.send_message('S', reply); // success
     }

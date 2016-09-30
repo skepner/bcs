@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <cstdio>
+#include <cerrno>
 
 #include "file.hh"
 
@@ -41,5 +43,17 @@ void write_file(std::string filename, std::string data, bool minus_for_std)
         throw std::runtime_error(filename + ": cannot open for writing");
 
 } // write_file
+
+// ----------------------------------------------------------------------
+
+std::string write_temp_file(std::string data)
+{
+    char name[L_tmpnam];
+    if (!std::tmpnam(name))
+        throw std::runtime_error(std::string("tmpnam failed: ") + std::strerror(errno));
+    write_file(name, data, false);
+    return name;
+
+} // write_temp_file
 
 // ----------------------------------------------------------------------
