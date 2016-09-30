@@ -46,6 +46,8 @@ all: $(DIST)/bcs
 clean:
 	rm -rf $(DIST) $(BUILD)
 
+-include $(BUILD)/*.d
+
 # ----------------------------------------------------------------------
 
 $(DIST)/bcs: $(patsubst %.cc,$(BUILD)/%.o,$(SOURCES)) $(AESCRYPT_OBJ) | $(DIST)

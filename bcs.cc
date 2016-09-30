@@ -14,7 +14,7 @@ std::string get_password(bool repeat);
 
 // ----------------------------------------------------------------------
 
-enum Command { Encrypt, Decrypt, Server, KillServer };
+enum ClientCommand { Encrypt, Decrypt, Server, StopServer };
 
 static const char* socket_path = "/var/run/bcs.socket";
 
@@ -23,7 +23,7 @@ static const char* socket_path = "/var/run/bcs.socket";
 int main(int argc, char* const* argv)
 {
     int exit_code = 0;
-    Command command = Decrypt;
+    ClientCommand command = Decrypt;
     bool via_server = false;
     option longopts[] = {
         {"encrypt",     no_argument, nullptr, 'e'},
@@ -49,7 +49,7 @@ int main(int argc, char* const* argv)
               via_server = true;
               break;
           case 'k':
-              command = KillServer;
+              command = StopServer;
               break;
           default:
               usage(argv[0]);
@@ -64,7 +64,7 @@ int main(int argc, char* const* argv)
               if (argc != 2)
                   usage(argv[0]);
               if (via_server)
-                  client(socket_path, 'E', argv[0], argv[1]);
+                  client_command(socket_path, true, argv[0], argv[1]);
               else
                   write_file(argv[1], encrypt(get_password(true), read_file(argv[0])));
               break;
@@ -72,15 +72,15 @@ int main(int argc, char* const* argv)
               if (argc != 2)
                   usage(argv[0]);
               if (via_server)
-                  client(socket_path, 'D', argv[0], argv[1]);
+                  client_command(socket_path, false, argv[0], argv[1]);
               else
                   write_file(argv[1], decrypt(get_password(false), read_file(argv[0])));
               break;
           case Server:
               server(socket_path, get_password(true));
               break;
-          case KillServer:
-              client(socket_path, 'K');
+          case StopServer:
+              client(socket_path, KillServer);
               break;
         }
     }
