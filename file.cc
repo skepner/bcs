@@ -2,6 +2,8 @@
 #include <fstream>
 #include <cstdio>
 #include <cerrno>
+#include <cstdlib>
+#include <unistd.h>
 
 #include "file.hh"
 
@@ -48,12 +50,44 @@ void write_file(std::string filename, std::string data, bool minus_for_std)
 
 std::string write_temp_file(std::string data)
 {
-    char name[L_tmpnam];
-    if (!std::tmpnam(name))
-        throw std::runtime_error(std::string("tmpnam failed: ") + std::strerror(errno));
+      // tmpnam is deprecated due to security concerns
+    // char name[L_tmpnam];
+    // if (!std::tmpnam(name))
+    //     throw std::runtime_error(std::string("tmpnam failed: ") + std::strerror(errno));
+
+    constexpr const char* tmp_env[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR"};
+    const char* tmpdir = nullptr;
+    for (auto tenv: tmp_env) {
+        if ((tmpdir = std::getenv(tenv)) != nullptr)
+            break;
+    }
+    if (tmpdir == nullptr)
+        tmpdir = "/tmp";
+
+    char name[1024];
+    strcpy(name, tmpdir);
+    strcat(name, "/bcs.XXXXXX");
+    if (mkstemp(name) < 0)
+        throw std::runtime_error(std::string("mkstemp failed: ") + std::strerror(errno));
+
     write_file(name, data, false);
     return name;
 
 } // write_temp_file
+
+// ----------------------------------------------------------------------
+
+std::string resolve_path(std::string data)
+{
+    if (data.empty())
+        throw std::runtime_error("resolve_path failed: path is empty");
+    if (data[0] != '/') {
+        char* cwd = getcwd(nullptr, 0);
+        data = std::string(cwd) + "/" + data;
+        free(cwd);
+    }
+    return data;
+
+} // resolve_path
 
 // ----------------------------------------------------------------------

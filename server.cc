@@ -321,6 +321,29 @@ void client_command(std::string socket_filename, bool encrypt, std::string arg1,
             output_expected = true;
     }
 
+    switch (cmd) {
+      case EncryptFileFile:
+      case DecryptFileFile:
+          arg1 = resolve_path(arg1);
+          arg2 = resolve_path(arg2);
+          break;
+      case EncryptDataFile:
+      case DecryptDataFile:
+          arg2 = resolve_path(arg2);
+          break;
+      case EncryptFileData:
+      case DecryptFileData:
+      case DecryptFileTemp:
+          arg1 = resolve_path(arg1);
+          break;
+      case DisconnectClient:
+      case KillServer:
+      case EncryptDataData:
+      case DecryptDataData:
+      case DecryptDataTemp:
+          break;
+    }
+
     std::string result = client(socket_filename, cmd, arg1, arg2 == "-" || arg2 == "=" ? std::string() : arg2, output_expected);
     if (output_expected) {
         if (arg2 == "-")
