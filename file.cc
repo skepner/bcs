@@ -48,7 +48,7 @@ void write_file(std::string filename, std::string data, bool minus_for_std)
 
 // ----------------------------------------------------------------------
 
-std::string write_temp_file(std::string data)
+std::string write_temp_file(std::string data, std::string suffix)
 {
       // tmpnam is deprecated due to security concerns
     // char name[L_tmpnam];
@@ -64,10 +64,13 @@ std::string write_temp_file(std::string data)
     if (tmpdir == nullptr)
         tmpdir = "/tmp";
 
-    char name[1024];
+    char name[2048];
     strcpy(name, tmpdir);
-    strcat(name, "/bcs.XXXXXX");
-    if (mkstemp(name) < 0)
+    if (name[strlen(name) - 1] != '/')
+        strcat(name, "/");
+    strcat(name, "bcs.XXXXXX");
+    strcat(name, suffix.c_str());
+    if (mkstemps(name, static_cast<int>(suffix.size())) < 0)
         throw std::runtime_error(std::string("mkstemp failed: ") + std::strerror(errno));
 
     write_file(name, data, false);
@@ -89,5 +92,23 @@ std::string resolve_path(std::string data)
     return data;
 
 } // resolve_path
+
+// ----------------------------------------------------------------------
+
+std::string find_suffix(std::string data)
+{
+    if (data.size() > 4 && data.substr(data.size() - 4) == ".aes")
+        data = data.substr(0, data.size() - 4);
+    std::string suffix;
+    for (std::string::size_type dot_pos = data.rfind('.'); dot_pos != std::string::npos; dot_pos = data.rfind('.')) {
+        const std::string suf = data.substr(dot_pos);
+        suffix = suf + suffix;
+        data = data.substr(0, dot_pos);
+        if (suf != ".bz2" || suf != ".xz" || suf != ".gz")
+            break;
+    }
+    return suffix;
+
+} // find_suffix
 
 // ----------------------------------------------------------------------

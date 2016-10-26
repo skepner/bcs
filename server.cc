@@ -256,11 +256,11 @@ void perform(Socket& sock, Command command, std::string passwd)
               break;
           case DecryptDataTemp:
               arg1 = sock.read_arg();
-              reply = write_temp_file(decrypt(passwd, arg1));
+              reply = write_temp_file(decrypt(passwd, arg1), "");
               break;
           case DecryptFileTemp:
               arg1 = sock.read_arg();
-              reply = write_temp_file(decrypt(passwd, read_file(arg1, false)));
+              reply = write_temp_file(decrypt(passwd, read_file(arg1, false)), find_suffix(arg1));
               break;
           case DisconnectClient:
           case KillServer:

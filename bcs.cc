@@ -75,12 +75,16 @@ int main(int argc, char* const* argv)
                   write_file(argv[1], encrypt(get_password(true, encrypted_sample), read_file(argv[0])));
               break;
           case Decrypt:
-              if (argc != 2)
-                  usage(progname);
-              if (via_server)
-                  client_command(socket_path, false, argv[0], argv[1]);
-              else
+              if (via_server) {
+                  if (argc != 2 && argc != 1)
+                      usage(progname);
+                  client_command(socket_path, false, argv[0], argc >= 2 ? argv[1] : "");
+              }
+              else {
+                  if (argc != 2)
+                      usage(progname);
                   write_file(argv[1], decrypt(get_password(false, encrypted_sample), read_file(argv[0])));
+              }
               break;
           case Server:
               server(socket_path, get_password(true, encrypted_sample));
