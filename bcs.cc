@@ -26,6 +26,7 @@ int main(int argc, char* const* argv)
     ClientCommand command = Decrypt;
     bool via_server = false;
     std::string encrypted_sample;
+    const char* progname = argv[0];
     option longopts[] = {
         {"encrypt",     no_argument, nullptr, 'e'},
         {"decrypt",     no_argument, nullptr, 'd'},
@@ -57,7 +58,7 @@ int main(int argc, char* const* argv)
               encrypted_sample = optarg;
               break;
           default:
-              usage(argv[0]);
+              usage(progname);
         }
     }
     argc -= optind;
@@ -67,7 +68,7 @@ int main(int argc, char* const* argv)
         switch (command) {
           case Encrypt:
               if (argc != 2)
-                  usage(argv[0]);
+                  usage(progname);
               if (via_server)
                   client_command(socket_path, true, argv[0], argv[1]);
               else
@@ -75,7 +76,7 @@ int main(int argc, char* const* argv)
               break;
           case Decrypt:
               if (argc != 2)
-                  usage(argv[0]);
+                  usage(progname);
               if (via_server)
                   client_command(socket_path, false, argv[0], argv[1]);
               else
