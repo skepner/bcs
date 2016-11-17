@@ -1,0 +1,19 @@
+#! /bin/bash
+echo $(date) $0 "$@" >>/tmp/bcsuv.log
+
+if [ $# -ne 2 ]; then
+    echo Usage: $0 "<filename>" "<target_dir|filename.aes>" >&2
+    exit 1
+fi
+
+S="$1"
+T="$2"
+if [ -d "$T" ]; then
+    T="$T"/"$(basename $S)".aes
+fi
+if [ -e "$T" ]; then
+    echo "$T laready exists" >&2
+    exit 2
+fi
+
+$HOME/bin/bcs -ce "$S" "$T"
