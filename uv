@@ -1,13 +1,24 @@
 #! /bin/bash
 echo $(date) $0 "$@" >>/tmp/bcsuv.log
 
-if [ $# -ne 2 ]; then
+function failed {
+    echo "FAILED" >&2
+    exit 100
+}
+trap failed ERR
+
+if [ $# -eq 2 ]; then
+    S="$1"
+    T="$2"
+elif [ $# -eq 1 ]; then
+    S="$1"
+    T="$1".aes
+    DEL_S=1
+else
     echo Usage: $0 "<filename>" "<target_dir|filename.aes>" >&2
     exit 1
 fi
 
-S="$1"
-T="$2"
 if [ -d "$T" ]; then
     T="$T"/"$(basename $S)".aes
 fi
@@ -16,4 +27,9 @@ if [ -e "$T" ]; then
     exit 2
 fi
 
+# echo $HOME/bin/bcs -ce "$S" "$T" >&2
 $HOME/bin/bcs -ce "$S" "$T"
+
+if [ -n "$DEL_S" ]; then
+    rm "$S"
+fi
