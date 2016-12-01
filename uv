@@ -27,6 +27,7 @@ if [ -e "$T" ]; then
     exit 2
 fi
 
+resource-fork-remove "$S"
 # echo $HOME/bin/bcs -ce "$S" "$T" >&2
 $HOME/bin/bcs -ce "$S" "$T"
 
