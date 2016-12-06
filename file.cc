@@ -13,8 +13,13 @@ std::string read_file(std::string filename, bool minus_for_std)
 {
     if (minus_for_std && filename == "-") {
         std::string data;
-        while (std::cin)
-            data.append(1, static_cast<char>(std::cin.get()));
+        while (true) {
+            const auto c = std::cin.get();
+            if (std::cin)
+                data.append(1, static_cast<char>(c));
+            else
+                break;
+        }
         return data;
     }
     if (std::ifstream in{filename, std::ios::binary | std::ios::ate}) {
