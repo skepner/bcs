@@ -53,7 +53,7 @@ clean:
 $(DIST)/bcs: $(patsubst %.cc,$(BUILD)/%.o,$(SOURCES)) $(AESCRYPT_OBJ) | $(DIST)
 	g++ $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-$(BUILD)/%.o: %.cc  $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
+$(BUILD)/%.o: %.cc $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
 	@#echo $<
 	g++ $(CXXFLAGS) -c -o $@ $<
 
@@ -65,7 +65,9 @@ $(BUILD)/%.o: $(AESCRYPT_SRC)/%.c $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submo
 $(AESCRYPT_CONFIG_H): $(AESCRYPT_ROOT)/Makefile.am
 	cd $(AESCRYPT_ROOT) && autoreconf -i && ./configure
 
-$(BUILD)/submodules:
+$(AESCRYPT_ROOT)/Makefile.am: | $(BUILD)/submodules
+
+$(BUILD)/submodules: | $(BUILD)
 	git submodule init
 	git submodule update
 	git submodule update --remote
