@@ -53,7 +53,7 @@ clean:
 $(DIST)/bcs: $(patsubst %.cc,$(BUILD)/%.o,$(SOURCES)) $(AESCRYPT_OBJ) | $(DIST)
 	g++ $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-$(BUILD)/%.o: %.cc | $(BUILD) $(BUILD)/submodules
+$(BUILD)/%.o: %.cc  $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
 	@#echo $<
 	g++ $(CXXFLAGS) -c -o $@ $<
 
@@ -61,8 +61,6 @@ $(BUILD)/%.o: $(AESCRYPT_SRC)/%.c $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submo
 	gcc $(CFLAGS) -c -o $@ $<
 
 # ----------------------------------------------------------------------
-
-$(BUILD)/bcs-encrypt.o: $(AESCRYPT_CONFIG_H)
 
 $(AESCRYPT_CONFIG_H): $(AESCRYPT_ROOT)/Makefile.am
 	cd $(AESCRYPT_ROOT) && autoreconf -i && ./configure
