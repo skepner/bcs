@@ -57,10 +57,12 @@ $(BUILD)/%.o: %.cc | $(BUILD) $(BUILD)/submodules
 	@#echo $<
 	g++ $(CXXFLAGS) -c -o $@ $<
 
-$(BUILD)/%.o: $(AESCRYPT_SRC)/%.c $(AESCRYPT_CONFIG_H) | $(BUILD)
+$(BUILD)/%.o: $(AESCRYPT_SRC)/%.c $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
 	gcc $(CFLAGS) -c -o $@ $<
 
 # ----------------------------------------------------------------------
+
+$(BUILD)/bcs-encrypt.o: $(AESCRYPT_CONFIG_H)
 
 $(AESCRYPT_CONFIG_H): $(AESCRYPT_ROOT)/Makefile.am
 	cd $(AESCRYPT_ROOT) && autoreconf -i && ./configure
