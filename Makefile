@@ -57,7 +57,7 @@ $(BUILD)/%.o: %.cc $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
 	@#echo $<
 	g++ $(CXXFLAGS) -c -o $@ $<
 
-$(BUILD)/%.o: $(AESCRYPT_SRC)/%.c $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
+$(BUILD)/%.o: $(AESCRYPT_SRC)/%.c | $(AESCRYPT_CONFIG_H) $(BUILD) $(BUILD)/submodules
 	gcc $(CFLAGS) -c -o $@ $<
 
 # ----------------------------------------------------------------------
