@@ -36,29 +36,28 @@ AESCRYPT_SRC = $(AESCRYPT_ROOT)/src
 INCLUDES += -I$(AESCRYPT_ROOT) -I$(AESCRYPT_SRC)
 AESCRYPT_CONFIG_H = $(AESCRYPT_ROOT)/config.h
 AESCRYPT_SOURCES = aes.c sha256.c password.c keyfile.c aesrandom.c util.c
-AESCRYPT_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(AESCRYPT_SOURCES))
 
 # ----------------------------------------------------------------------
 
-all: $(DIST)/bcs
-	@#$(DIST)/bcs
+all:  $(BUILD)/submodules
+	$(MAKE) $(DIST)/bcs
 
 clean:
 	rm -rf $(DIST) $(BUILD)
 
 -include $(BUILD)/*.d
+-include $(BUILD)/submodules
 
 # ----------------------------------------------------------------------
 
-$(DIST)/bcs: $(patsubst %.cc,$(BUILD)/%.o,$(SOURCES)) $(AESCRYPT_OBJ) | $(DIST)
+$(DIST)/bcs: $(patsubst %.c,$(BUILD)/%.o,$(AESCRYPT_SOURCES)) $(patsubst %.cc,$(BUILD)/%.o,$(SOURCES)) | $(DIST)
 	g++ $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-$(BUILD)/%.o: %.cc $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
-	@#echo $<
-	g++ $(CXXFLAGS) -c -o $@ $<
-
-$(BUILD)/%.o: $(AESCRYPT_SRC)/%.c | $(AESCRYPT_CONFIG_H) $(BUILD) $(BUILD)/submodules
+$(BUILD)/%.o: $(AESCRYPT_SRC)/%.c $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
 	gcc $(CFLAGS) -c -o $@ $<
+
+$(BUILD)/%.o: %.cc $(AESCRYPT_CONFIG_H) | $(BUILD) $(BUILD)/submodules
+	g++ $(CXXFLAGS) -c -o $@ $<
 
 # ----------------------------------------------------------------------
 
