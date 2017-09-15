@@ -4,6 +4,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "file.hh"
 
@@ -60,14 +61,19 @@ std::string write_temp_file(std::string data, std::string suffix)
     // if (!std::tmpnam(name))
     //     throw std::runtime_error(std::string("tmpnam failed: ") + std::strerror(errno));
 
-    constexpr const char* tmp_env[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR"};
     const char* tmpdir = nullptr;
-    for (auto tenv: tmp_env) {
-        if ((tmpdir = std::getenv(tenv)) != nullptr)
-            break;
+    struct stat stat_buf;
+    if (!stat("/r/ramdisk-id", &stat_buf) && !stat("/r/T", &stat_buf))
+        tmpdir = "/r/T";
+    if (tmpdir == nullptr) {
+        constexpr const char* tmp_env[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR"};
+        for (auto tenv: tmp_env) {
+            if ((tmpdir = std::getenv(tenv)) != nullptr)
+                break;
+        }
+        if (tmpdir == nullptr)
+            tmpdir = "/tmp";
     }
-    if (tmpdir == nullptr)
-        tmpdir = "/tmp";
 
     char name[2048];
     strcpy(name, tmpdir);
