@@ -87,7 +87,7 @@ int main(int argc, char* const* argv)
               }
               break;
           case Server:
-              server(socket_path, get_password(true, encrypted_sample));
+              server(socket_path, get_password(encrypted_sample.empty(), encrypted_sample));
               break;
           case StopServer:
               client(socket_path, KillServer);
