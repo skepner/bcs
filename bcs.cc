@@ -16,7 +16,7 @@ std::string get_password(bool repeat, std::string encrypted_sample);
 
 enum ClientCommand { Encrypt, Decrypt, Server, StopServer };
 
-static const char* socket_path = "/var/run/bcs.socket";
+static const char* socket_subpath = "/.var/run/bcs.socket";
 
 // ----------------------------------------------------------------------
 
@@ -64,6 +64,7 @@ int main(int argc, char* const* argv)
     argc -= optind;
     argv += optind;
 
+    const auto socket_path{std::string{getenv("HOME")} + socket_subpath};
     try {
         switch (command) {
           case Encrypt:
