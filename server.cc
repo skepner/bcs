@@ -16,7 +16,7 @@
 // ----------------------------------------------------------------------
 
 static void child_completed(int sig);
-[[noreturn]] static void server_terminated(int sig);
+static void server_terminated(int sig);
 
 #pragma GCC diagnostic push
 #ifdef __clang__
@@ -171,29 +171,45 @@ static void perform(Socket& sock, Command command, std::string passwd);
 
 void server(std::string socket_filename, std::string passwd)
 {
-    std::signal(SIGCHLD, child_completed);
-    std::signal(SIGINT, server_terminated);
-    std::signal(SIGTERM, server_terminated);
 
-    Socket sock(socket_filename, true);
-    while (true) {
-        Socket connection = sock.accept();
-        const Command command = read_command(connection);
-        if (command == KillServer) {
-            connection.send_message('S'); // success
-            break;
-        }
-        if (command != DisconnectClient) {
-            const auto pid = fork();
-            if (pid < 0)
-                throw std::runtime_error("fork");
-            if (pid == 0)  {
-                  // child
-                sock.close();
-                perform(connection, command, passwd);
-                std::exit(0);
+    const int pid_server = fork();
+    if (pid_server < 0)
+        throw std::runtime_error("cannot fork server");
+    if (pid_server == 0) {
+        // child: background server
+        setsid();
+        std::signal(SIGHUP, SIG_IGN);
+        std::signal(SIGCHLD, child_completed);
+        std::signal(SIGINT, server_terminated);
+        std::signal(SIGTERM, server_terminated);
+        ::close(0);
+        ::close(1);
+        ::close(2);
+
+        Socket sock(socket_filename, true);
+        while (true) {
+            Socket connection = sock.accept();
+            const Command command = read_command(connection);
+            if (command == KillServer) {
+                connection.send_message('S'); // success
+                break;
+            }
+            if (command != DisconnectClient) {
+                const int pid = fork();
+                if (pid < 0)
+                    throw std::runtime_error("fork");
+                if (pid == 0) {
+                    // child
+                    sock.close();
+                    perform(connection, command, passwd);
+                    std::exit(0);
+                }
             }
         }
+    }
+    else {
+        // parent, server starter
+        std::exit(0);
     }
 
 } // server
